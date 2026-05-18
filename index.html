@@ -1795,40 +1795,52 @@
 
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
-  /* ---- NAVBAR SCROLL ---- */
-  const navbar = document.getElementById('navbar');
-  window.addEventListener('scroll', () => {
-    navbar.classList.toggle('scrolled', window.scrollY > 60);
-  });
+  const SUPABASE_URL = "https://qnsrbmovtjrjancuhdzd.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Z29XPIAKaZ3rfgJCjNsGXg_s2tjkkaQ";
 
-  /* ---- MOBILE MENU ---- */
-  let menuOpen = false;
-  function toggleMenu() {
-    menuOpen = !menuOpen;
-    document.getElementById('mobileMenu').classList.toggle('open', menuOpen);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ================= BOOKING =================
+async function doSubmit() {
+  const data = {
+    name: document.getElementById("fn").value,
+    phone: document.getElementById("fp").value,
+    dob: document.getElementById("fd").value,
+    appointment_date: document.getElementById("fa").value,
+    doctor: document.getElementById("fs").value
+  };
+
+  if (!data.name || !data.phone || !data.appointment_date || !data.doctor) {
+    alert("Fill all fields");
+    return;
   }
 
-  /* ---- MODAL ---- */
-  function openModal() {
-    document.getElementById('appointmentModal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    // Set min date
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('f-date').min = today;
+  const { error } = await supabase.from("bookings").insert([data]);
+
+  if (error) {
+    console.log(error);
+    alert("Error!");
+  } else {
+    alert("Booking Successful ✅");
+    closeModal();
+    loadStats();
   }
-  function openModalWithDoctor(docName) {
-    openModal();
-    const sel = document.getElementById('f-doctor');
-    for (let i = 0; i < sel.options.length; i++) {
-      if (sel.options[i].value.includes(docName.split('(')[0].trim())) {
-        sel.selectedIndex = i;
-        break;
-      }
-    }
+}
+
+// ================= STATS =================
+async function loadStats() {
+  const { data } = await supabase.from("bookings").select("*");
+
+  if (data) {
+    const total = data.length;
+
+    document.querySelectorAll(".count").forEach(el => {
+      el.innerText = total;
+    });
   }
-  function closeModal() {
-    document.getElementById('appointmentModal').style.display = 'none';
-    document.body.style.overflow = '';
+}
+
+window.onload = loadStats;
   }
   // Close on overlay click
   document.getElementById('appointmentModal').addEventListener('click', function(e) {
@@ -1921,6 +1933,7 @@
   }, { threshold: 0.5 });
   barFills.forEach(el => barObs.observe(el));
 </script>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
