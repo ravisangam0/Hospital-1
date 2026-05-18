@@ -1794,38 +1794,75 @@
 </div>
 
 <!-- ==================== JAVASCRIPT ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-  const SUPABASE_URL = "https://qnsrbmovtjrjancuhdzd.supabase.co";
+const SUPABASE_URL = "https://qnsrbmovtjrjancuhdzd.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Z29XPIAKaZ3rfgJCjNsGXg_s2tjkkaQ";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ================= BOOKING =================
-async function doSubmit() {
-  const data = {
-    name: document.getElementById("fn").value,
-    phone: document.getElementById("fp").value,
-    dob: document.getElementById("fd").value,
-    appointment_date: document.getElementById("fa").value,
-    doctor: document.getElementById("fs").value
-  };
+// OPEN MODAL
+function openModal() {
+  document.getElementById("appointmentModal").style.display = "flex";
+}
 
-  if (!data.name || !data.phone || !data.appointment_date || !data.doctor) {
-    alert("Fill all fields");
+// CLOSE MODAL
+function closeModal() {
+  document.getElementById("appointmentModal").style.display = "none";
+}
+
+// OPEN WITH DOCTOR
+function openModalWithDoctor(name) {
+  openModal();
+  document.getElementById("f-doctor").value = name;
+}
+
+// SUBMIT BOOKING (DATABASE + WHATSAPP)
+async function submitAppointment() {
+  const name = document.getElementById("f-name").value;
+  const phone = document.getElementById("f-phone").value;
+  const dob = document.getElementById("f-dob").value;
+  const date = document.getElementById("f-date").value;
+  const doctor = document.getElementById("f-doctor").value;
+
+  if (!name || !phone || !date || !doctor) {
+    alert("Please fill all fields");
     return;
   }
 
-  const { error } = await supabase.from("bookings").insert([data]);
+  // SAVE TO DATABASE
+  const { error } = await supabase.from("bookings").insert([
+    { name, phone, dob, appointment_date: date, doctor }
+  ]);
 
   if (error) {
-    console.log(error);
-    alert("Error!");
-  } else {
-    alert("Booking Successful ✅");
-    closeModal();
-    loadStats();
+    console.error(error);
+    alert("❌ Database error");
+    return;
+  }
+
+  // WHATSAPP MESSAGE
+  const msg = `New Booking:%0AName:${name}%0APhone:${phone}%0ADate:${date}%0ADoctor:${doctor}`;
+  window.open(`https://wa.me/9189860035559?text=${msg}`, "_blank");
+
+  alert("✅ Booking Saved!");
+  closeModal();
+}
+
+// LOAD STATS
+async function loadStats() {
+  const { data } = await supabase.from("bookings").select("*");
+
+  if (data) {
+    document.querySelectorAll(".count").forEach(el => {
+      el.innerText = data.length;
+    });
   }
 }
+
+window.onload = loadStats;
+</script>
 
 // ================= STATS =================
 async function loadStats() {
